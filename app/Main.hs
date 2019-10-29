@@ -4,7 +4,7 @@ import Control.Monad (foldM)
 import Data.List (foldr, map, sort, maximum)
 import Data.HashMap ((!), empty, insert, Map)
 import Data.String (words)
-import Data.Bits (shiftL, shiftR, setBit, clearBit, testBit)
+import Data.Bits (shiftL, shiftR, setBit, testBit)
 import Numeric (showHex, showIntAtBase)
 import Data.Char (intToDigit)
 
@@ -59,11 +59,12 @@ mergeTables table range tables = doMergeTables 0 $ shiftL 1 range
     doMergeTables i result | otherwise  = doMergeTables
       (succ i)
       (if testBit table (code i) then setBit result i else result)
-    code i = snd $ foldr getCode (i, 0) tables
-    getCode (inputsCount, t) (i, c) = (shiftR i inputsCount, nextC)
-      where
-        nextC = if c == 0 then currentBit else (shiftL c 1) + currentBit
-        currentBit = if testBit t (i `mod` 2^inputsCount) then 1 else 0
+    code i = let (_, _, c) = foldr getCode (0, i, 0) tables in c
+
+getCode :: (Int, Integer) -> (Int, Int, Int) -> (Int, Int, Int)
+getCode (inputsCount, t) (position, i, c) = (succ position, shiftR i inputsCount, nextC)
+  where
+    nextC = if testBit t (i `mod` 2^inputsCount) then setBit c position else c
 
 depth :: M -> Int -> Int
 depth m n = case m ! n of
