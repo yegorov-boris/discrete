@@ -1,7 +1,7 @@
 module Main where
 
 import Control.Monad (foldM)
-import Data.List (foldr, map, sort)
+import Data.List (foldr, map, sort, maximum)
 import Data.HashMap ((!), empty, insert, Map)
 import Data.String (words)
 import Data.Bits (shiftL, shiftR, setBit, clearBit, testBit)
@@ -14,6 +14,7 @@ main = do
   let n = read s :: Int
   m <- foldM readInput empty [1..n]
   let r = snd $ getResult m n
+  putStrLn $ show $ depth m n
   putStrLn $ reverse $ tail $ showIntAtBase 2 intToDigit r ""
 
 data T = E | N Int [Int] Integer deriving Show
@@ -63,3 +64,8 @@ mergeTables table range tables = doMergeTables 0 $ shiftL 1 range
       where
         nextC = if c == 0 then currentBit else (shiftL c 1) + currentBit
         currentBit = if testBit t (i `mod` 2^inputsCount) then 1 else 0
+
+depth :: M -> Int -> Int
+depth m n = case m ! n of
+  E               -> 0
+  (N _ indexes _) -> 1 + (maximum $ map (depth m) indexes)
