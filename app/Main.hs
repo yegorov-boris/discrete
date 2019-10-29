@@ -1,39 +1,42 @@
 module Main where
 
 import Control.Monad (foldM)
-import Data.List (zipWith, filter, map, sort)
-import Data.HashMap (fromList, Map)
+import Data.List (foldr, map, sort)
+import Data.HashMap (empty, insert, Map)
 import Data.String (words)
+import Data.Bits (shift)
+import Numeric (showHex, showIntAtBase)
+import Data.Char (intToDigit)
 
 main :: IO ()
 main = do
   s <- getLine
   let n = read s :: Int
-  ss <- foldM readInput [] [1..n]
-  let indexed = zipWith (\a b -> (a, toNode b)) [1..] (reverse ss)
-  let leaves = sort $ map fst $ filter (isLeave . snd) indexed
-  let nodes = fromList indexed :: Map Int T
-  putStrLn $ show leaves
-  putStrLn $ show nodes
+  m <- foldM readInput empty [1..n]
+  putStrLn $ show m
 
-readInput :: [(String, String)] -> Int -> IO [(String, String)]
-readInput ss _ = do
+data T = E | N Int [Int] Integer deriving Show
+
+readInput :: Map Int T -> Int -> IO (Map Int T)
+readInput m i = do
   s <- getLine
   if
     s == "0"
   then
-    return $ (s, ""):ss
+    return $ insert i E m
   else
-    getLine >>= \s' -> return $ (s, s'):ss
+    getLine >>= \s' -> return $ insert i (toNode s s') m
 
-data T = L Bool | N [Int] [Bool] deriving Show
+toNode :: String -> String -> T
+toNode a b =
+  let
+    ns = map (\s -> read s :: Int) $ words a
+  in
+    N (head ns) (sort $ tail ns) (fromBits b)
 
-isLeave :: T -> Bool
-isLeave (L _) = True
-isLeave _     = False
-
-toNode :: (String, String) -> T
-toNode ("0", _) = L False
-toNode (a, b)   = N
-  (map (\s -> read s :: Int) $ tail $ words a)
-  (map (== "1") $ words b)
+fromBits :: String -> Integer
+fromBits s = foldr processBit 0 s
+  where
+    processBit '0' n = shift n 1
+    processBit '1' n = (shift n 1) + 1
+    processBit _   n = n
